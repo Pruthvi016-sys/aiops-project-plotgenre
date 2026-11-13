@@ -48,7 +48,7 @@ split:
   seed: 42
 
 featurize:
-  max_features: 50000
+  max_features: 40000
   ngram_max: 2
   min_df: 3
   max_df: 0.6

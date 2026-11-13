@@ -1,5 +1,5 @@
 {
-  "vocabulary_size": 50000,
+  "vocabulary_size": 40000,
   "labels": [
     "Action",
     "Adventure",
@@ -19,7 +19,7 @@
     "val": 3464,
     "test": 6927
   },
-  "fit_seconds": 13.19,
-  "transform_seconds": 6.97,
-  "transform_throughput_rows_per_s": 4968.2
+  "fit_seconds": 11.47,
+  "transform_seconds": 6.56,
+  "transform_throughput_rows_per_s": 5276.5
 }

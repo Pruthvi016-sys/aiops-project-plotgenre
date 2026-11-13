@@ -141,7 +141,7 @@ stages:
     params:
       params.yaml:
         featurize:
-          max_features: 50000
+          max_features: 40000
           ngram_max: 2
           min_df: 3
           max_df: 0.6
@@ -149,20 +149,20 @@ stages:
     outs:
     - path: data/features
       hash: md5
-      md5: 70a59c0fe8ad09cfd6a0142eea0bbc88.dir
-      size: 27316575
+      md5: 679d6b4418a4c422158959da6c38294a.dir
+      size: 26211256
       nfiles: 8
     - path: reports/featurize_summary.json
       hash: md5
-      md5: 5600db010ed1229f2a5e5e834a07ec3c
+      md5: ae864956ed5172fce84b6c92bb10054a
       size: 400
   train:
     cmd: python -m plotgenre.models.train
     deps:
     - path: data/features
       hash: md5
-      md5: 70a59c0fe8ad09cfd6a0142eea0bbc88.dir
-      size: 27316575
+      md5: 679d6b4418a4c422158959da6c38294a.dir
+      size: 26211256
       nfiles: 8
     - path: src/plotgenre/models/explain.py
       hash: md5
@@ -205,23 +205,23 @@ stages:
     outs:
     - path: models/model.pkl.enc
       hash: md5
-      md5: ff2aab6674d76d492612a12f9be2d577
-      size: 25116876
+      md5: bdfc986b513f1f7d164aad656f649041
+      size: 20076836
     - path: models/run_info.json
       hash: md5
-      md5: f2afa59f53dbe1d0b6c03e1b49f7d0d2
-      size: 438
+      md5: b6190289cb8907f47648a85195f859b8
+      size: 435
     - path: reports/train_metrics.json
       hash: md5
-      md5: 95b198d952a9bda279adef8e482b15f3
+      md5: 542aed3ee42ca17266c05e258d575c4a
       size: 324
   evaluate:
     cmd: python -m plotgenre.models.evaluate
     deps:
     - path: data/features
       hash: md5
-      md5: 70a59c0fe8ad09cfd6a0142eea0bbc88.dir
-      size: 27316575
+      md5: 679d6b4418a4c422158959da6c38294a.dir
+      size: 26211256
       nfiles: 8
     - path: data/splits
       hash: md5
@@ -230,12 +230,12 @@ stages:
       nfiles: 3
     - path: models/model.pkl.enc
       hash: md5
-      md5: ff2aab6674d76d492612a12f9be2d577
-      size: 25116876
+      md5: bdfc986b513f1f7d164aad656f649041
+      size: 20076836
     - path: models/run_info.json
       hash: md5
-      md5: f2afa59f53dbe1d0b6c03e1b49f7d0d2
-      size: 438
+      md5: b6190289cb8907f47648a85195f859b8
+      size: 435
     - path: src/plotgenre/models/evaluate.py
       hash: md5
       md5: 1f866de709ecce4d3705d41a88fd3387
@@ -249,12 +249,12 @@ stages:
     outs:
     - path: reports/metrics.json
       hash: md5
-      md5: e7c81e9e1aef31fb5f85bfc4ddb1ad73
-      size: 608
+      md5: d9f646a400f382d189428dc6cc59f342
+      size: 614
     - path: reports/per_genre_f1.csv
       hash: md5
-      md5: 4af31dadc24e3c0504c6a5a727a2bf7b
-      size: 434
+      md5: 5009284d172eaff35640b6c9ef78fb4e
+      size: 437
   drift_check:
     cmd: python -m plotgenre.monitoring.drift
     deps:

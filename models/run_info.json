@@ -1,14 +1,14 @@
 {
-  "run_id": "7ed6e5315654409781f4f86226716a18",
+  "run_id": "4f12ff1843774fcab6500135db40c89e",
   "experiment_id": "1",
-  "model_uri": "models:/m-416c297425b941319b90fe039c9629f5",
+  "model_uri": "models:/m-e0bf6fc897ad4b708f74f47a0de687ee",
   "registered_model_name": "plotgenre-classifier",
-  "model_version": "2",
+  "model_version": "3",
   "best_model": "linear_svm",
   "threshold": 0.3,
   "data_version": "v2",
-  "pipeline_run_id": "20261113T171647-edc069",
-  "git_commit": "b363483fed793b87ea160f89929f2716465498da",
+  "pipeline_run_id": "20261113T173242-cli",
+  "git_commit": "84331d9354b4c1331a5c69b3033489dc22edc5b8",
   "git_branch": "main",
   "git_dirty": "true"
 }
