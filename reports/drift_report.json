@@ -1,0 +1,11 @@
+{
+  "data_version": "v2",
+  "reference_rows": 5000,
+  "current_rows": 5000,
+  "current_definition": "films released in or after 2000",
+  "drift_score": 1.6521,
+  "js_distance": 0.0373,
+  "noise_floor_js": 0.0225,
+  "threshold": 2.0,
+  "retrain_recommended": false
+}

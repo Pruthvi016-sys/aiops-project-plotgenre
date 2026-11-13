@@ -41,7 +41,7 @@ split:
   # Data versions are defined by release year.
   #   v1 = films released before `cutoff_year` (the "older films" snapshot)
   #   v2 = all films (used after drift on newer films is detected -> retrain)
-  data_version: v1
+  data_version: v2
   cutoff_year: 2000
   test_size: 0.2
   val_size: 0.1

@@ -1,0 +1,36 @@
+{
+  "rows_in": 42306,
+  "rows_out": 34632,
+  "rows_rejected": 7674,
+  "reject_reasons": {
+    "accepted": 34632,
+    "no_target_genre": 3463,
+    "missing_year": 2569,
+    "too_short": 1587,
+    "year_out_of_range": 31,
+    "too_long": 18,
+    "empty_text": 6
+  },
+  "malformed_fraction": 0.0,
+  "duplicate_ids_removed": 0,
+  "genre_counts": {
+    "Drama": 18340,
+    "Comedy": 11963,
+    "Romance": 6826,
+    "Thriller": 6559,
+    "Action": 6439,
+    "Adventure": 5870,
+    "Crime": 5077,
+    "Horror": 3899,
+    "Family": 3688,
+    "Science Fiction": 2243,
+    "Fantasy": 2076,
+    "Mystery": 2052
+  },
+  "avg_words": 337.7,
+  "year_min": 1900,
+  "year_max": 2014,
+  "elapsed_s": 7.52,
+  "throughput_rows_per_s": 5622.8,
+  "ray_num_cpus": 12
+}

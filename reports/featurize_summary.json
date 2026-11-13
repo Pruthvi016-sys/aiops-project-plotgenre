@@ -1,0 +1,25 @@
+{
+  "vocabulary_size": 50000,
+  "labels": [
+    "Action",
+    "Adventure",
+    "Comedy",
+    "Crime",
+    "Drama",
+    "Family",
+    "Fantasy",
+    "Horror",
+    "Mystery",
+    "Romance",
+    "Science Fiction",
+    "Thriller"
+  ],
+  "rows": {
+    "train": 24241,
+    "val": 3464,
+    "test": 6927
+  },
+  "fit_seconds": 13.19,
+  "transform_seconds": 6.97,
+  "transform_throughput_rows_per_s": 4968.2
+}

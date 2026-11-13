@@ -1,0 +1,14 @@
+{
+  "run_id": "7ed6e5315654409781f4f86226716a18",
+  "experiment_id": "1",
+  "model_uri": "models:/m-416c297425b941319b90fe039c9629f5",
+  "registered_model_name": "plotgenre-classifier",
+  "model_version": "2",
+  "best_model": "linear_svm",
+  "threshold": 0.3,
+  "data_version": "v2",
+  "pipeline_run_id": "20261113T171647-edc069",
+  "git_commit": "b363483fed793b87ea160f89929f2716465498da",
+  "git_branch": "main",
+  "git_dirty": "true"
+}

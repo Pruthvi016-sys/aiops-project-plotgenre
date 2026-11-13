@@ -1,0 +1,14 @@
+{
+  "data_version": "v2",
+  "cutoff_year": 2000,
+  "rows_total_processed": 34632,
+  "rows_in_version": 34632,
+  "rows_newer_films": 13769,
+  "rows_train": 24241,
+  "rows_val": 3464,
+  "rows_test": 6927,
+  "year_range": [
+    1900,
+    2014
+  ]
+}

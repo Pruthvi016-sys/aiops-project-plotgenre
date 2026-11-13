@@ -1,0 +1,22 @@
+{
+  "test_micro_f1": 0.6651,
+  "test_macro_f1": 0.6177,
+  "test_samples_f1": 0.6607,
+  "test_micro_precision": 0.6139,
+  "test_micro_recall": 0.7256,
+  "test_hamming_loss": 0.1317,
+  "latency_p50_ms": 17.9625,
+  "latency_p95_ms": 18.7024,
+  "latency_mean_ms": 18.0047,
+  "test_batch_throughput_docs_per_s": 4455.014,
+  "model_version": "2",
+  "best_model": "linear_svm",
+  "promoted": true,
+  "promotion_reason": "promoted: 0.6651 vs champion 0.6581",
+  "previous_champion_version": "1",
+  "acceptance": {
+    "micro_f1_ge_threshold": true,
+    "p95_latency_lt_500ms": true
+  },
+  "acceptance_passed": true
+}

@@ -1,0 +1,292 @@
+schema: '2.0'
+stages:
+  ingest:
+    cmd: python -m plotgenre.data.ingest
+    deps:
+    - path: src/plotgenre/data/ingest.py
+      hash: md5
+      md5: aca544de2ce79d87f54e0d2bb2b134d8
+      size: 4249
+    params:
+      params.yaml:
+        ingest:
+          url: http://www.cs.cmu.edu/~ark/personas/data/MovieSummaries.tar.gz
+          archive_path: data/raw/MovieSummaries.tar.gz
+          extract_dir: data/raw
+          timeout_s: 300
+    outs:
+    - path: data/raw/MovieSummaries
+      hash: md5
+      md5: b0307a780a5b17ac355c86491153a1e2.dir
+      size: 92189031
+      nfiles: 3
+  preprocess:
+    cmd: python -m plotgenre.data.preprocess
+    deps:
+    - path: data/raw/MovieSummaries
+      hash: md5
+      md5: b0307a780a5b17ac355c86491153a1e2.dir
+      size: 92189031
+      nfiles: 3
+    - path: src/plotgenre/data/cleaning.py
+      hash: md5
+      md5: 32c68195c071fc0d55d7e2282cf5623d
+      size: 2901
+    - path: src/plotgenre/data/preprocess.py
+      hash: md5
+      md5: d8f6efa8dc6dcbaaf0b4d9a9a9cd1b60
+      size: 8584
+    params:
+      params.yaml:
+        preprocess:
+          num_cpus:
+          batch_size: 2000
+          min_words: 30
+          max_words: 3000
+          min_year: 1900
+          max_year: 2016
+          max_null_fraction: 0.05
+          genre_keywords:
+            Drama:
+            - drama
+            Comedy:
+            - comedy
+            - comedic
+            - satire
+            - parody
+            Romance:
+            - romance
+            - romantic
+            Thriller:
+            - thriller
+            - suspense
+            Action:
+            - action
+            - martial arts
+            Crime:
+            - crime
+            - gangster
+            - heist
+            - noir
+            Horror:
+            - horror
+            - slasher
+            - zombie
+            Adventure:
+            - adventure
+            - swashbuckler
+            Science Fiction:
+            - science fiction
+            - sci-fi
+            - sci fi
+            Family:
+            - family
+            - children
+            Fantasy:
+            - fantasy
+            Mystery:
+            - mystery
+            - detective
+            - whodunit
+    outs:
+    - path: data/processed/movies.parquet
+      hash: md5
+      md5: a984ea4f421883c181a8e09c613a3e3a
+      size: 41875952
+    - path: reports/data_quality.json
+      hash: md5
+      md5: 311eba5eec4c535ff024527653ee3387
+      size: 745
+  split:
+    cmd: python -m plotgenre.data.split
+    deps:
+    - path: data/processed/movies.parquet
+      hash: md5
+      md5: a984ea4f421883c181a8e09c613a3e3a
+      size: 41875952
+    - path: src/plotgenre/data/split.py
+      hash: md5
+      md5: fb20ead45b30b9b912f8b989450dcee4
+      size: 3485
+    params:
+      params.yaml:
+        split:
+          data_version: v2
+          cutoff_year: 2000
+          test_size: 0.2
+          val_size: 0.1
+          seed: 42
+    outs:
+    - path: data/splits
+      hash: md5
+      md5: d4e428a837e69b50c797b820eb9ea64f.dir
+      size: 42072264
+      nfiles: 3
+    - path: reports/split_summary.json
+      hash: md5
+      md5: d41b84610d7e083a29ffaf6fc3bd9a0e
+      size: 245
+  featurize:
+    cmd: python -m plotgenre.data.featurize
+    deps:
+    - path: data/splits
+      hash: md5
+      md5: d4e428a837e69b50c797b820eb9ea64f.dir
+      size: 42072264
+      nfiles: 3
+    - path: src/plotgenre/data/featurize.py
+      hash: md5
+      md5: 51f743839024b0fac6f9f7b01571f919
+      size: 5634
+    params:
+      params.yaml:
+        featurize:
+          max_features: 50000
+          ngram_max: 2
+          min_df: 3
+          max_df: 0.6
+          sublinear_tf: true
+    outs:
+    - path: data/features
+      hash: md5
+      md5: 70a59c0fe8ad09cfd6a0142eea0bbc88.dir
+      size: 27316575
+      nfiles: 8
+    - path: reports/featurize_summary.json
+      hash: md5
+      md5: 5600db010ed1229f2a5e5e834a07ec3c
+      size: 400
+  train:
+    cmd: python -m plotgenre.models.train
+    deps:
+    - path: data/features
+      hash: md5
+      md5: 70a59c0fe8ad09cfd6a0142eea0bbc88.dir
+      size: 27316575
+      nfiles: 8
+    - path: src/plotgenre/models/explain.py
+      hash: md5
+      md5: 408b810d2e05cf6c7ffee7b01cea61d3
+      size: 3472
+    - path: src/plotgenre/models/pyfunc_model.py
+      hash: md5
+      md5: 66de0afb35a356517e10f6272354333c
+      size: 4595
+    - path: src/plotgenre/models/train.py
+      hash: md5
+      md5: 8ca260749ba6469b60a7cf2e66ba93bf
+      size: 12744
+    params:
+      params.yaml:
+        train:
+          experiment_name: plotgenre
+          registered_model_name: plotgenre-classifier
+          seed: 42
+          candidates:
+            logreg:
+              C: 4.0
+              max_iter: 1000
+            linear_svm:
+              C: 0.5
+              calibration_cv: 3
+            complement_nb:
+              alpha: 0.3
+              calibration_cv: 3
+          threshold_grid:
+          - 0.15
+          - 0.2
+          - 0.25
+          - 0.3
+          - 0.35
+          - 0.4
+          - 0.45
+          - 0.5
+          explain_top_k: 8
+    outs:
+    - path: models/model.pkl.enc
+      hash: md5
+      md5: ff2aab6674d76d492612a12f9be2d577
+      size: 25116876
+    - path: models/run_info.json
+      hash: md5
+      md5: f2afa59f53dbe1d0b6c03e1b49f7d0d2
+      size: 438
+    - path: reports/train_metrics.json
+      hash: md5
+      md5: 95b198d952a9bda279adef8e482b15f3
+      size: 324
+  evaluate:
+    cmd: python -m plotgenre.models.evaluate
+    deps:
+    - path: data/features
+      hash: md5
+      md5: 70a59c0fe8ad09cfd6a0142eea0bbc88.dir
+      size: 27316575
+      nfiles: 8
+    - path: data/splits
+      hash: md5
+      md5: d4e428a837e69b50c797b820eb9ea64f.dir
+      size: 42072264
+      nfiles: 3
+    - path: models/model.pkl.enc
+      hash: md5
+      md5: ff2aab6674d76d492612a12f9be2d577
+      size: 25116876
+    - path: models/run_info.json
+      hash: md5
+      md5: f2afa59f53dbe1d0b6c03e1b49f7d0d2
+      size: 438
+    - path: src/plotgenre/models/evaluate.py
+      hash: md5
+      md5: 1f866de709ecce4d3705d41a88fd3387
+      size: 6516
+    params:
+      params.yaml:
+        evaluate:
+          min_micro_f1: 0.4
+          promote_alias: champion
+          allow_equal: true
+    outs:
+    - path: reports/metrics.json
+      hash: md5
+      md5: e7c81e9e1aef31fb5f85bfc4ddb1ad73
+      size: 608
+    - path: reports/per_genre_f1.csv
+      hash: md5
+      md5: 4af31dadc24e3c0504c6a5a727a2bf7b
+      size: 434
+  drift_check:
+    cmd: python -m plotgenre.monitoring.drift
+    deps:
+    - path: data/processed/movies.parquet
+      hash: md5
+      md5: a984ea4f421883c181a8e09c613a3e3a
+      size: 41875952
+    - path: data/splits
+      hash: md5
+      md5: d4e428a837e69b50c797b820eb9ea64f.dir
+      size: 42072264
+      nfiles: 3
+    - path: src/plotgenre/monitoring/drift.py
+      hash: md5
+      md5: e306349bdae8b4c9c9671cd9af4aa837
+      size: 3970
+    params:
+      params.yaml:
+        drift:
+          threshold: 2.0
+          top_terms: 300
+          sample_size: 5000
+          online_window: 300
+          floor_draws: 5
+        split.cutoff_year: 2000
+        split.seed: 42
+    outs:
+    - path: reports/drift_reference.json
+      hash: md5
+      md5: 8dfbfdeadab48f785183dcc800a373f4
+      size: 5504
+    - path: reports/drift_report.json
+      hash: md5
+      md5: 905fda5354421d32ea988a55bba63977
+      size: 265
