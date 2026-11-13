@@ -1,0 +1,19 @@
+# Full development / pipeline environment (Python 3.12 recommended).
+# Training + data pipeline
+ray[data]==2.60.0
+mlflow==3.18.0
+scikit-learn==1.9.1
+numpy==2.5.3
+scipy==1.18.1
+pandas==3.0.5
+pyarrow==26.0.1
+cryptography==50.0.1
+PyYAML==6.0.3
+prometheus-client==0.26.0
+# Versioning / CI
+dvc==3.67.1
+# Services
+fastapi==0.162.0
+uvicorn==0.54.0
+httpx==0.28.1
+pydantic==2.13.5

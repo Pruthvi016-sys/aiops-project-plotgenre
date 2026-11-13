@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "plotgenre"
+version = "1.0.0"
+description = "Movie genre prediction from plot summaries - an end-to-end AIOps project (DA3408)"
+authors = [{ name = "Mudda Manikanta Pruthvi Raj", email = "da24b016@smail.iitm.ac.in" }]
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "services"]
+markers = [
+    "unit: fast isolated tests",
+    "integration: tests that combine several components (no docker needed)",
+    "e2e: tests against the running docker-compose stack (set E2E_BASE_URL)",
+]
+filterwarnings = ["ignore::DeprecationWarning", "ignore::FutureWarning"]
+
+[tool.coverage.run]
+source = ["src/plotgenre", "services"]

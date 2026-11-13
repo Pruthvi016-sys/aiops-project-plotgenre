@@ -1,0 +1,21 @@
+# Drift alerts are sent to the pipeline-runner webhook, which retrains the model.
+route:
+  receiver: log-only
+  group_by: ["alertname"]
+  group_wait: 10s
+  group_interval: 1m
+  repeat_interval: 1h
+  routes:
+    - matchers: ['action="retrain"']
+      receiver: pipeline-retrain
+
+receivers:
+  - name: log-only
+  - name: pipeline-retrain
+    webhook_configs:
+      - url: http://pipeline-runner:8100/api/v1/alerts
+        send_resolved: false
+        http_config:
+          authorization:
+            type: Bearer
+            credentials_file: /etc/alertmanager/api_key

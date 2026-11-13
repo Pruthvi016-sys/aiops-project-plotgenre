@@ -1,0 +1,39 @@
+flowchart TB
+  user([User / browser])
+  subgraph FE["frontend container :8080"]
+    ui["Static web UI<br/>(Classify, Pipeline, Help)"]
+    proxy["REST proxy + telemetry<br/>(FastAPI)"]
+  end
+  subgraph BE["backend"]
+    gw["gateway :8000<br/>FastAPI: auth, validation,<br/>metrics, live drift"]
+    ms["model-server :5001<br/>MLflow models serve<br/>+ deploy supervisor"]
+    runner["pipeline-runner :8100<br/>FastAPI console API<br/>runs dvc repro"]
+  end
+  subgraph ML["ML platform"]
+    mlflow["MLflow :5000<br/>tracking + model registry"]
+    dvc[("Git + DVC workspace<br/>data, params, dvc.lock")]
+    remote[("DVC local remote")]
+  end
+  subgraph MON["monitoring"]
+    prom["Prometheus :9090"]
+    pg["Pushgateway :9091"]
+    am["Alertmanager :9093"]
+    graf["Grafana :3000"]
+    node["node-exporter"]
+  end
+  user --> ui
+  ui -- "/api/* (same origin)" --> proxy
+  proxy -- "REST + API key" --> gw
+  proxy -- "REST + API key" --> runner
+  gw -- "POST /invocations" --> ms
+  gw -- "registry REST" --> mlflow
+  ms -- "load champion<br/>(encrypted model)" --> mlflow
+  runner -- "dvc repro / push" --> dvc
+  dvc --> remote
+  runner -- "log runs, register model" --> mlflow
+  runner -- "stage metrics" --> pg
+  gw & proxy & ms & runner & pg & node -. "/metrics" .-> prom
+  prom -- alerts --> am
+  am -- "drift webhook -> retrain" --> runner
+  graf -- PromQL --> prom
+  ui -. "embedded panels" .-> graf

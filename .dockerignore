@@ -1,0 +1,11 @@
+.git
+.dvc/cache
+.dvc/tmp
+data
+models
+mlflow_data
+logs
+**/__pycache__
+.pytest_cache
+.venv
+docs

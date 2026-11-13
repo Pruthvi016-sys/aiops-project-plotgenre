@@ -1,0 +1,36 @@
+# Continuous integration on every push / PR: lint, unit + integration tests,
+# DVC pipeline validation. (The full DVC pipeline itself is the training CI and
+# runs locally / in the pipeline-runner, because the data never leaves the machine.)
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { lfs: true }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - name: Install
+        run: |
+          pip install -r requirements-dev.txt
+          pip install -e .
+      - name: Lint (PEP8 via flake8)
+        run: flake8 src services scripts tests
+      - name: Validate DVC pipeline
+        run: dvc dag
+      - name: Unit + integration tests
+        run: python scripts/generate_test_report.py
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: |
+            docs/test_report.md
+            reports/junit.xml
+            reports/coverage.xml

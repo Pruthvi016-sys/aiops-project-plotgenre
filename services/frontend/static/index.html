@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PlotGenre – find a film's genres from its plot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500;62..125,700;62..125,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/config.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="topbar">
+    <a class="brand" href="#/classify" aria-label="PlotGenre home">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="2" y="6" width="28" height="20" rx="3" fill="#1C2A44"/>
+        <g fill="#E8ECF1"><rect x="5" y="9" width="3" height="3" rx=".6"/><rect x="5" y="20" width="3" height="3" rx=".6"/>
+        <rect x="24" y="9" width="3" height="3" rx=".6"/><rect x="24" y="20" width="3" height="3" rx=".6"/></g>
+        <rect x="11" y="10" width="10" height="12" rx="1.5" fill="#D9961A"/>
+      </svg>
+      <span>PlotGenre</span>
+    </a>
+    <nav class="tabs" aria-label="Main">
+      <a href="#/classify" data-route="classify">Classify a plot</a>
+      <a href="#/pipeline" data-route="pipeline">Pipeline</a>
+      <a href="#/help" data-route="help">Help</a>
+    </nav>
+    <div class="service" id="service-status" role="status" aria-live="polite">
+      <span class="dot" aria-hidden="true"></span><span class="label">Checking model…</span>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <!-- ============================== CLASSIFY ============================== -->
+    <section class="view" id="view-classify" aria-labelledby="classify-title">
+      <div class="classify-grid">
+        <div class="editor">
+          <h1 id="classify-title">What kind of film is this?</h1>
+          <p class="lede">Paste or type a plot summary. PlotGenre suggests its genres, how sure it is, and which words led it there.</p>
+
+          <label for="plot" class="field-label">Plot summary</label>
+          <textarea id="plot" rows="12" maxlength="20000" spellcheck="true"
+            placeholder="For example: A shy lighthouse keeper finds a stranded mermaid on the rocks and must hide her from the villagers before the winter storms arrive…"
+            aria-describedby="plot-help plot-count"></textarea>
+          <div class="field-foot">
+            <span id="plot-help">Use at least 5 words. 30 or more gives better results.</span>
+            <span id="plot-count" aria-live="polite">0 words</span>
+          </div>
+
+          <div class="actions">
+            <button id="predict-btn" class="btn primary" disabled>Find genres</button>
+            <button id="clear-btn" class="btn ghost" type="button">Clear</button>
+            <span class="kbd-hint">or press <kbd>Ctrl</kbd> + <kbd>Enter</kbd></span>
+          </div>
+
+          <div class="samples">
+            <span class="samples-label">Try an example:</span>
+            <div class="sample-list" id="sample-list"></div>
+          </div>
+        </div>
+
+        <div class="results" id="results" aria-live="polite">
+          <div class="empty" id="results-empty">
+            <svg viewBox="0 0 120 80" aria-hidden="true" class="empty-art">
+              <rect x="6" y="10" width="108" height="60" rx="6" fill="none" stroke="#9AA6B8" stroke-width="2" stroke-dasharray="5 5"/>
+              <rect x="22" y="26" width="44" height="6" rx="3" fill="#C9D1DC"/><rect x="22" y="38" width="70" height="6" rx="3" fill="#C9D1DC"/>
+              <rect x="22" y="50" width="56" height="6" rx="3" fill="#C9D1DC"/>
+            </svg>
+            <p>Your genres will appear here.</p>
+          </div>
+          <div class="loading" id="results-loading" hidden>
+            <div class="reel" aria-hidden="true"></div><p>Reading the plot…</p>
+          </div>
+          <div class="alert error" id="results-error" role="alert" hidden></div>
+          <div id="results-body" hidden>
+            <h2 class="results-title">Suggested genres</h2>
+            <ul class="chips" id="predicted-chips"></ul>
+            <div class="alert warn" id="results-warnings" hidden></div>
+            <h3 class="sub">How sure the model is</h3>
+            <ol class="bars" id="genre-bars"></ol>
+            <h3 class="sub">Words that influenced it</h3>
+            <p class="hint">Highlighted words pushed the model towards the genre of the same colour.</p>
+            <blockquote class="annotated" id="annotated"></blockquote>
+            <p class="meta" id="result-meta"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== PIPELINE ============================== -->
+    <section class="view" id="view-pipeline" aria-labelledby="pipeline-title" hidden>
+      <div class="page-head">
+        <div>
+          <h1 id="pipeline-title">Pipeline console</h1>
+          <p class="lede">Data ingestion, training and deployment at a glance. Runs started from here or from a drift alert appear below.</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn primary" id="run-btn">Run pipeline</button>
+          <button class="btn secondary" id="retrain-btn" title="Retrain using newer films too (data version 2)">Retrain with newer films</button>
+        </div>
+      </div>
+
+      <div class="alert error" id="pipeline-error" role="alert" hidden></div>
+
+      <div class="status-strip" id="status-strip">
+        <div class="stat"><span class="stat-k">State</span><span class="stat-v" id="st-state">–</span></div>
+        <div class="stat"><span class="stat-k">Data version</span><span class="stat-v" id="st-data">–</span></div>
+        <div class="stat"><span class="stat-k">Model in service</span><span class="stat-v" id="st-model">–</span></div>
+        <div class="stat"><span class="stat-k">Test micro-F1</span><span class="stat-v" id="st-f1">–</span></div>
+        <div class="stat"><span class="stat-k">Runs (ok / failed)</span><span class="stat-v" id="st-runs">–</span></div>
+        <div class="stat"><span class="stat-k">Batch drift score</span><span class="stat-v" id="st-drift">–</span></div>
+      </div>
+
+      <h2 class="section-title">Pipeline stages</h2>
+      <p class="hint">The DVC pipeline. Colour shows the last result of each stage; hover or focus a stage for timing and throughput.</p>
+      <div class="dag-wrap"><svg id="dag" role="img" aria-label="Pipeline stages diagram"></svg></div>
+      <div class="legend">
+        <span><i class="lg success"></i>Succeeded</span><span><i class="lg failed"></i>Failed</span>
+        <span><i class="lg running"></i>Running</span><span><i class="lg never_run"></i>Not run yet</span>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <h2 class="section-title">Run history</h2>
+          <div class="table-wrap">
+            <table class="runs" id="runs-table">
+              <thead><tr><th scope="col">Started</th><th scope="col">Trigger</th><th scope="col">Result</th><th scope="col">Duration</th><th scope="col"><span class="sr">Details</span></th></tr></thead>
+              <tbody><tr><td colspan="5" class="muted">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <h2 class="section-title">Latest reports</h2>
+          <dl class="report" id="report-list"><dt>Loading…</dt><dd></dd></dl>
+        </div>
+      </div>
+
+      <h2 class="section-title">Live monitoring</h2>
+      <p class="hint">Near real-time panels from Grafana. <a id="grafana-link" target="_blank" rel="noopener">Open the full dashboard</a>.</p>
+      <div class="panels" id="grafana-panels"></div>
+
+      <h2 class="section-title">Tools</h2>
+      <ul class="tools" id="tool-links"></ul>
+    </section>
+
+    <!-- ============================== HELP ============================== -->
+    <section class="view prose" id="view-help" aria-labelledby="help-title" hidden>
+      <h1 id="help-title">How to use PlotGenre</h1>
+      <ol class="steps">
+        <li><strong>Open “Classify a plot”.</strong> Paste a plot summary of a film into the big text box, or click one of the examples.</li>
+        <li><strong>Click “Find genres”.</strong> After a moment you'll see the suggested genres.</li>
+        <li><strong>Read the result.</strong> The bars show how sure the model is for every genre. Genres with a tick are the ones it suggests.</li>
+        <li><strong>See why.</strong> Your text is shown again with the most influential words highlighted in the colour of the genre they point to.</li>
+      </ol>
+      <h2>Tips for better results</h2>
+      <ul>
+        <li>Write in English and describe what happens in the story: characters, places, conflicts.</li>
+        <li>Longer summaries (a paragraph or more) give more reliable results than one sentence.</li>
+        <li>A film can belong to several genres; that's expected.</li>
+      </ul>
+      <h2>If something goes wrong</h2>
+      <dl class="faq">
+        <dt>The button is greyed out</dt><dd>Type at least 5 words.</dd>
+        <dt>“The prediction service is starting…”</dt><dd>The model is being loaded or updated. Wait a few seconds and click “Find genres” again. The dot at the top right turns green when it is ready.</dd>
+        <dt>“The gateway service is not reachable”</dt><dd>The backend is stopped. Ask the administrator to run <code>docker compose up -d</code>.</dd>
+      </dl>
+      <h2>The pipeline page</h2>
+      <p>This page is for the people who maintain the system. It shows each step that prepares data and trains the model, a history of runs with their result, the latest quality reports and live monitoring charts. “Run pipeline” re-runs only the steps whose inputs changed. “Retrain with newer films” adds films released after 2000 to the training data.</p>
+      <p>The full user manual is in <code>docs/user_manual.md</code>.</p>
+    </section>
+  </main>
+
+  <dialog id="dialog" aria-labelledby="dialog-title">
+    <form method="dialog">
+      <h2 id="dialog-title"></h2>
+      <div id="dialog-body"></div>
+      <div class="dialog-actions">
+        <button value="cancel" class="btn ghost" id="dialog-cancel">Cancel</button>
+        <button value="ok" class="btn primary" id="dialog-ok">OK</button>
+      </div>
+    </form>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

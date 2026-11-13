@@ -1,0 +1,96 @@
+# =============================================================================
+# PlotGenre - single source of truth for every tunable value in the pipeline.
+# DVC tracks these keys per stage (see dvc.yaml "params:"), so changing a value
+# here makes `dvc repro` re-run only the stages that depend on it.
+# =============================================================================
+
+ingest:
+  # Public CMU Movie Summary Corpus (CC BY-SA). Downloaded once, then cached.
+  url: http://www.cs.cmu.edu/~ark/personas/data/MovieSummaries.tar.gz
+  archive_path: data/raw/MovieSummaries.tar.gz
+  extract_dir: data/raw
+  timeout_s: 300
+
+preprocess:
+  # Ray Data settings
+  num_cpus: null            # null = let Ray use all available CPUs
+  batch_size: 2000
+  # Data-quality / validation rules
+  min_words: 30             # summaries shorter than this are dropped
+  max_words: 3000           # absurdly long summaries are dropped (outliers)
+  min_year: 1900
+  max_year: 2016
+  max_null_fraction: 0.05   # quality gate: fail the stage if more rows than this are malformed
+  # Raw Freebase genre strings are mapped onto these 12 target genres by keyword
+  # match (case-insensitive substring). A film can get several labels.
+  genre_keywords:
+    Drama: [drama]
+    Comedy: [comedy, comedic, satire, parody]
+    Romance: [romance, romantic]
+    Thriller: [thriller, suspense]
+    Action: [action, martial arts]
+    Crime: [crime, gangster, heist, noir]
+    Horror: [horror, slasher, zombie]
+    Adventure: [adventure, swashbuckler]
+    Science Fiction: [science fiction, sci-fi, sci fi]
+    Family: [family, children]
+    Fantasy: [fantasy]
+    Mystery: [mystery, detective, whodunit]
+
+split:
+  # Data versions are defined by release year.
+  #   v1 = films released before `cutoff_year` (the "older films" snapshot)
+  #   v2 = all films (used after drift on newer films is detected -> retrain)
+  data_version: v1
+  cutoff_year: 2000
+  test_size: 0.2
+  val_size: 0.1
+  seed: 42
+
+featurize:
+  max_features: 50000
+  ngram_max: 2
+  min_df: 3
+  max_df: 0.6
+  sublinear_tf: true
+
+train:
+  experiment_name: plotgenre
+  registered_model_name: plotgenre-classifier
+  seed: 42
+  # Models compared on the validation split; the best one is registered.
+  candidates:
+    logreg:
+      C: 4.0
+      max_iter: 1000
+    linear_svm:
+      C: 0.5
+      calibration_cv: 3
+    complement_nb:
+      alpha: 0.3
+      calibration_cv: 3
+  # A single global decision threshold is tuned on validation to maximise micro-F1
+  threshold_grid: [0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5]
+  explain_top_k: 8
+
+evaluate:
+  # Acceptance criteria (see docs/test_plan.md). The model is promoted to the
+  # "champion" alias only if it passes these AND is not worse than the
+  # current champion -> automatic rollback-safe deployment.
+  min_micro_f1: 0.40
+  promote_alias: champion
+  allow_equal: true
+
+drift:
+  # Reference = training data of the current version.
+  # Current   = films released on/after cutoff_year (newer films).
+  # drift_score = JS distance(reference, current) / JS distance(reference,
+  # same-size held-out reference sample). ~1.0 means "no more different than
+  # sampling noise"; the threshold is a ratio so it works for any sample size.
+  # Calibrated on this corpus: same-distribution ~1.0, newer films vs v1 training
+  # data ~2.4, newer films vs v2 training data ~1.7 -> 2.0 separates "drifted" well.
+  threshold: 2.0            # drift score above this => retraining recommended
+  top_terms: 300
+  sample_size: 5000
+  online_window: 300        # gateway computes live drift over the last N requests
+  floor_draws: 5

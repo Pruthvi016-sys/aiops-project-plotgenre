@@ -1,0 +1,11 @@
+flowchart LR
+  A["drift_check stage<br/>pushes drift score"] --> B["Pushgateway"] --> C["Prometheus rule<br/>PlotGenreDataDrift > 2.0"]
+  G["Gateway live drift<br/>(last 300 requests)"] --> C2["Prometheus rule<br/>PlotGenreLiveInputDrift"]
+  C --> D["Alertmanager<br/>route action=retrain"]
+  C2 --> D
+  D -- "webhook (Bearer key)" --> E["pipeline-runner<br/>/api/v1/alerts"]
+  E -- "data_version=v2,<br/>dvc repro, dvc push" --> F["new model version<br/>in MLflow registry"]
+  F -- "evaluate: passes AC and<br/>>= champion?" --> H{"promote"}
+  H -- yes --> I["alias champion -> new,<br/>previous -> old"]
+  H -- no --> J["keep current champion"]
+  I --> K["model-server supervisor<br/>redeploys (auto rollback<br/>if health check fails)"]

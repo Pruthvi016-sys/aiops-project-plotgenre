@@ -1,0 +1,106 @@
+# DVC pipeline = the CI DAG of PlotGenre.
+# `dvc repro` runs only the stages whose deps/params changed.
+# `dvc dag` prints the graph; the Pipeline page of the UI renders the same graph.
+stages:
+  ingest:
+    cmd: python -m plotgenre.data.ingest
+    deps:
+      - src/plotgenre/data/ingest.py
+    params:
+      - ingest
+    outs:
+      - data/raw/MovieSummaries:
+          persist: true
+
+  preprocess:
+    cmd: python -m plotgenre.data.preprocess
+    deps:
+      - src/plotgenre/data/preprocess.py
+      - src/plotgenre/data/cleaning.py
+      - data/raw/MovieSummaries
+    params:
+      - preprocess
+    outs:
+      - data/processed/movies.parquet
+    metrics:
+      - reports/data_quality.json:
+          cache: false
+
+  split:
+    cmd: python -m plotgenre.data.split
+    deps:
+      - src/plotgenre/data/split.py
+      - data/processed/movies.parquet
+    params:
+      - split
+    outs:
+      - data/splits
+    metrics:
+      - reports/split_summary.json:
+          cache: false
+
+  featurize:
+    cmd: python -m plotgenre.data.featurize
+    deps:
+      - src/plotgenre/data/featurize.py
+      - data/splits
+    params:
+      - featurize
+    outs:
+      - data/features
+    metrics:
+      - reports/featurize_summary.json:
+          cache: false
+
+  train:
+    cmd: python -m plotgenre.models.train
+    deps:
+      - src/plotgenre/models/train.py
+      - src/plotgenre/models/pyfunc_model.py
+      - src/plotgenre/models/explain.py
+      - data/features
+    params:
+      - train
+    outs:
+      - models/model.pkl.enc
+      - models/run_info.json:
+          cache: false
+    metrics:
+      - reports/train_metrics.json:
+          cache: false
+
+  evaluate:
+    cmd: python -m plotgenre.models.evaluate
+    deps:
+      - src/plotgenre/models/evaluate.py
+      - models/model.pkl.enc
+      - models/run_info.json
+      - data/features
+      - data/splits
+    params:
+      - evaluate
+    metrics:
+      - reports/metrics.json:
+          cache: false
+    plots:
+      - reports/per_genre_f1.csv:
+          cache: false
+          x: genre
+          y: f1
+
+  drift_check:
+    cmd: python -m plotgenre.monitoring.drift
+    deps:
+      - src/plotgenre/monitoring/drift.py
+      - data/processed/movies.parquet
+      - data/splits
+    params:
+      - drift
+      - split.cutoff_year
+      - split.seed
+    outs:
+      - reports/drift_reference.json:
+          cache: false
+    metrics:
+      - reports/drift_report.json:
+          cache: false

@@ -1,0 +1,9 @@
+# Runtime dependencies of the MLflow pyfunc model (also recorded inside the
+# logged MLflow model). Pinned so training and serving are identical.
+mlflow==3.18.0
+scikit-learn==1.9.1
+numpy==2.5.3
+scipy==1.18.1
+pandas==3.0.5
+cryptography==50.0.1
+PyYAML==6.0.3

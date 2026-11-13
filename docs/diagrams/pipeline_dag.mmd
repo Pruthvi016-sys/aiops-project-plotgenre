@@ -1,0 +1,11 @@
+flowchart LR
+  ingest["1 ingest<br/>download + schema checks"] --> preprocess["2 preprocess (Ray Data)<br/>parse, join, clean, validate,<br/>map genres, quality gate"]
+  preprocess --> split["3 split<br/>data version v1/v2,<br/>train/val/test"]
+  split --> featurize["4 featurize (Ray tasks)<br/>TF-IDF fit + parallel transform"]
+  featurize --> train["5 train (MLflow)<br/>3 models, threshold tuning,<br/>encrypt + register"]
+  train --> evaluate["6 evaluate<br/>test metrics, latency,<br/>gated promotion"]
+  split --> evaluate
+  preprocess --> drift["7 drift_check<br/>newer films vs training"]
+  split --> drift
+  drift -. "alert > 2.0" .-> retrain(["Alertmanager webhook<br/>retrain on data v2"])
+  retrain -.-> split

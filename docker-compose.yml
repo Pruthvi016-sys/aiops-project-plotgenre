@@ -1,0 +1,158 @@
+# PlotGenre - full local stack (Linux, no cloud).
+#   docker compose up -d --build
+# UI http://localhost:8080 | Gateway http://localhost:8000/docs | MLflow http://localhost:5000
+# Grafana http://localhost:3000 | Prometheus http://localhost:9090 | Alertmanager http://localhost:9093
+#
+# Frontend and backend are separate services that talk only over REST
+# (frontend -> gateway -> model-server), configured by the URLs below.
+
+name: plotgenre
+
+x-common-env: &common-env
+  LOG_LEVEL: INFO
+  MLFLOW_TRACKING_URI: http://mlflow:5000
+
+services:
+  # ------------------------------------------------------------------ ML platform
+  mlflow:
+    build: { context: ., dockerfile: services/model_server/Dockerfile }
+    image: plotgenre/mlflow-serving:1.0.0
+    command: >
+      mlflow server --host 0.0.0.0 --port 5000
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --artifacts-destination /mlflow/artifacts --serve-artifacts
+      --allowed-hosts "${MLFLOW_ALLOWED_HOSTS:-mlflow,mlflow:5000,localhost,localhost:5000,127.0.0.1,127.0.0.1:5000}"
+      --cors-allowed-origins "http://localhost:8080"
+    ports: ["5000:5000"]
+    volumes: [mlflow-data:/mlflow]
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  model-server:
+    image: plotgenre/mlflow-serving:1.0.0
+    command: ["python", "/srv/serve.py"]
+    environment:
+      <<: *common-env
+      MODEL_NAME: plotgenre-classifier
+      MODEL_ALIAS: champion
+      SERVE_PORT: "5001"
+      METRICS_PORT: "9102"
+      POLL_SECONDS: "20"
+      PLOTGENRE_MODEL_KEY: ${PLOTGENRE_MODEL_KEY:?run scripts/setup.sh first}
+    ports: ["5001:5001"]
+    depends_on:
+      mlflow: { condition: service_healthy }
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------ backend
+  gateway:
+    build: { context: ., dockerfile: services/gateway/Dockerfile }
+    image: plotgenre/gateway:1.0.0
+    environment:
+      <<: *common-env
+      MODEL_SERVER_URL: http://model-server:5001
+      API_KEY: ${API_KEY:?run scripts/setup.sh first}
+      DRIFT_REFERENCE_PATH: /srv/reports/drift_reference.json
+      MLFLOW_PUBLIC_URL: http://localhost:5000
+      CORS_ORIGINS: http://localhost:8080
+    volumes: ["./reports:/srv/reports:ro"]
+    ports: ["8000:8000"]
+    depends_on: [model-server]
+    restart: unless-stopped
+
+  pipeline-runner:
+    build: { context: ., dockerfile: services/pipeline_runner/Dockerfile }
+    image: plotgenre/pipeline-runner:1.0.0
+    user: "${UID:-1000}:${GID:-1000}"
+    environment:
+      <<: *common-env
+      API_KEY: ${API_KEY:?run scripts/setup.sh first}
+      PLOTGENRE_MODEL_KEY: ${PLOTGENRE_MODEL_KEY:?run scripts/setup.sh first}
+      PUSHGATEWAY_URL: pushgateway:9091
+      RETRAIN_COOLDOWN_S: "1800"
+      RUNNER_DVC_PUSH: "1"
+    volumes:
+      - ./:/project
+      - ../plotgenre-dvc-storage:/plotgenre-dvc-storage   # DVC local remote
+    shm_size: 2gb   # Ray object store
+    ports: ["8100:8100"]
+    depends_on:
+      mlflow: { condition: service_healthy }
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------ frontend
+  frontend:
+    build: { context: ., dockerfile: services/frontend/Dockerfile }
+    image: plotgenre/frontend:1.0.0
+    environment:
+      GATEWAY_URL: http://gateway:8000
+      PIPELINE_URL: http://pipeline-runner:8100
+      API_KEY: ${API_KEY:?run scripts/setup.sh first}
+      GRAFANA_PUBLIC_URL: http://localhost:3000
+      MLFLOW_PUBLIC_URL: http://localhost:5000
+      PROMETHEUS_PUBLIC_URL: http://localhost:9090
+      ALERTMANAGER_PUBLIC_URL: http://localhost:9093
+      GATEWAY_PUBLIC_URL: http://localhost:8000
+    ports: ["8080:8080"]
+    depends_on: [gateway, pipeline-runner]
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------ monitoring
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+      - --web.enable-lifecycle
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus:ro
+      - prometheus-data:/prometheus
+    ports: ["9090:9090"]
+    restart: unless-stopped
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml"]
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./.secrets/api_key:/etc/alertmanager/api_key:ro
+    ports: ["9093:9093"]
+    restart: unless-stopped
+
+  pushgateway:
+    image: prom/pushgateway:v1.9.0
+    ports: ["9091:9091"]
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.1
+    command: ["--path.rootfs=/host"]
+    volumes: ["/:/host:ro"]
+    pid: host
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/plotgenre.json
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports: ["3000:3000"]
+    depends_on: [prometheus]
+    restart: unless-stopped
+
+volumes:
+  mlflow-data:
+  prometheus-data:
+  grafana-data:

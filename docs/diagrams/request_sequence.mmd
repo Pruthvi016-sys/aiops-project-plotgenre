@@ -1,0 +1,15 @@
+sequenceDiagram
+  actor U as User
+  participant F as Frontend (proxy)
+  participant G as Gateway
+  participant M as Model server (MLflow)
+  participant R as MLflow registry
+  U->>F: Paste plot, click "Find genres"
+  F->>G: POST /api/v1/predict (X-API-Key)
+  G->>G: validate text, start timer
+  G->>M: POST /invocations {dataframe_records, params}
+  M-->>G: genres + keywords (JSON columns)
+  G->>R: champion version (cached 30 s)
+  G->>G: metrics, live drift window
+  G-->>F: PredictResponse
+  F-->>U: chips, confidence bars, highlighted words

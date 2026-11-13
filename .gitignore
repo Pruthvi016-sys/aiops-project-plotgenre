@@ -1,0 +1,38 @@
+# Secrets
+.env
+.secrets/
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Data & models are versioned by DVC (see dvc.lock), not Git
+/data/raw/MovieSummaries.tar.gz
+/data/raw/MovieSummaries
+/data/processed
+/data/splits
+/data/features
+/models/model.pkl.enc
+
+# Runtime state
+/logs/
+/mlflow_data/
+/mlruns/
+mlruns.db
+reports/pipeline_runs.jsonl
+reports/runner_runs.json
+reports/junit*.xml
+reports/coverage*.xml
+reports/pytest_output.txt
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store

@@ -1,0 +1,30 @@
+# MLflow Project: identical, reproducible environments for dev / test / CI.
+#   mlflow run . -e pipeline          # full DVC pipeline (dvc repro)
+#   mlflow run . -e train             # a single stage
+#   mlflow run . -e tests             # test-suite in the same environment
+# Add --env-manager local to reuse your current virtualenv instead of creating one.
+name: plotgenre
+
+python_env: python_env.yaml
+
+entry_points:
+  pipeline:
+    command: "bash scripts/run_pipeline.sh"
+  ingest:
+    command: "PYTHONPATH=src python -m plotgenre.data.ingest"
+  preprocess:
+    command: "PYTHONPATH=src python -m plotgenre.data.preprocess"
+  split:
+    command: "PYTHONPATH=src python -m plotgenre.data.split"
+  featurize:
+    command: "PYTHONPATH=src python -m plotgenre.data.featurize"
+  train:
+    command: "PYTHONPATH=src python -m plotgenre.models.train"
+  evaluate:
+    command: "PYTHONPATH=src python -m plotgenre.models.evaluate"
+  drift_check:
+    command: "PYTHONPATH=src python -m plotgenre.monitoring.drift"
+  tests:
+    parameters:
+      marker: {type: string, default: "unit or integration"}
+    command: "python -m pytest -m '{marker}' -q"

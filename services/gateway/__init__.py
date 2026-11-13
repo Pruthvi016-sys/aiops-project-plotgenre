@@ -1,0 +1,1 @@
+"""PlotGenre gateway service."""

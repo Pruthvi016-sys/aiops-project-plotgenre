@@ -1,0 +1,48 @@
+# Keep the 2.0 thresholds in sync with params.yaml -> drift.threshold.
+groups:
+  - name: plotgenre-drift
+    rules:
+      # Batch drift computed by the drift_check DVC stage (newer films vs training data).
+      - alert: PlotGenreDataDrift
+        expr: max(plotgenre_pipeline_drift_score{stage="drift_check"}) > 2.0
+        for: 30s
+        labels: { severity: warning, action: retrain }
+        annotations:
+          summary: "Batch data drift {{ $value | printf \"%.2f\" }} exceeds 2.0 - retraining on data v2"
+      # Live drift of incoming requests vs. the training reference (gateway).
+      - alert: PlotGenreLiveInputDrift
+        expr: plotgenre_live_drift_score > 2.0 and plotgenre_live_drift_window_size >= 150
+        for: 1m
+        labels: { severity: warning, action: retrain }
+        annotations:
+          summary: "Live input drift {{ $value | printf \"%.2f\" }} exceeds 2.0"
+
+  - name: plotgenre-service
+    rules:
+      - alert: PlotGenreHighErrorRate
+        expr: >
+          sum(rate(plotgenre_gateway_requests_total{status=~"5.."}[5m]))
+          / clamp_min(sum(rate(plotgenre_gateway_requests_total[5m])), 1e-9) > 0.05
+        for: 2m
+        labels: { severity: critical }
+        annotations: { summary: "More than 5% of API requests fail" }
+      - alert: PlotGenreHighLatency
+        expr: >
+          histogram_quantile(0.95, sum by (le) (rate(plotgenre_gateway_request_latency_seconds_bucket{endpoint="/api/v1/predict"}[5m]))) > 0.5
+        for: 5m
+        labels: { severity: warning }
+        annotations: { summary: "p95 prediction latency above 500 ms" }
+      - alert: PlotGenreModelServerDown
+        expr: plotgenre_model_server_up == 0 or up{job="model-server"} == 0
+        for: 1m
+        labels: { severity: critical }
+        annotations: { summary: "MLflow model server is not serving" }
+      - alert: PlotGenrePipelineFailed
+        expr: plotgenre_pipeline_last_run_success == 0
+        for: 0m
+        labels: { severity: warning }
+        annotations: { summary: "Last pipeline run failed - see the Pipeline console" }
+      - alert: PlotGenreUIErrors
+        expr: increase(plotgenre_frontend_ui_errors_total[10m]) > 10
+        labels: { severity: info }
+        annotations: { summary: "Users are seeing errors in the web UI" }
