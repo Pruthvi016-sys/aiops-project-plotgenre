@@ -1,88 +1,51 @@
-# Evidence checklist
+# Evidence checklist (for TAs)
 
-Every screenshot is taken on my Ubuntu machine during a real run. Terminal shots show the command and its output. Browser shots show the URL bar. The system clock is visible in all of them.
+Every screenshot below was taken on my Ubuntu 26.04 laptop during a real run of this repository on 13–14 Nov 2026.
 
-* Terminal and service evidence goes in `docs/screenshots/evidence/` with the names below.
-* UI screenshots keep their names in `docs/screenshots/` because the user manual uses them.
+* Run evidence (terminal and tool UIs): `docs/screenshots/evidence/`
+* Web UI screenshots used by the user manual: `docs/screenshots/`
 
-## Setup, Git, Docker (Software Packaging, Source Control)
+## Demonstration (5)
 
-| # | File | What it shows | Rubric |
-|---|---|---|---|
-| 1 | `E01_setup.png` | `bash scripts/setup.sh` output, `docker compose version` | Packaging |
-| 2 | `E02_git_log_lfs.png` | `git log --oneline` and `git lfs ls-files` | Git, Git LFS |
-| 3 | `E03_compose_build.png` | end of `docker compose up -d --build` | Docker |
-| 4 | `E04_compose_ps.png` | `docker compose ps` with all 10 services up/healthy | Docker Compose, separate FE/BE services |
-| 5 | `E05_docker_images.png` | `docker images \| grep plotgenre` | Docker |
+| Rubric item | Screenshot | What it shows |
+|---|---|---|
+| Intuitive UI for a non-technical user | `screenshots/01_classify_empty.png`, `screenshots/02_classify_result.png` | Paste a plot, get ranked genres with confidence bars and the words that influenced them |
+| Foolproof UX | `screenshots/03_classify_validation.png` | Button stays disabled under 5 words (the gateway also rejects it with a 422) |
+| Free of UI errors / clear error states | `screenshots/08_error_model_down.png` | Model server stopped: friendly message, *Try again*, red status dot |
+| Responsive UI | `screenshots/07_mobile_result.png` | iPhone 12 Pro layout (390 px) |
+| User manual | `screenshots/06_help.png`, [user_manual.md](user_manual.md) | In-app help plus a separate manual |
+| Separate pipeline screen + management console | `screenshots/04_pipeline_console.png`, `evidence/05_pipeline_console_drift_retrain.png` | DVC DAG with per-stage time and rows/s, Run / Retrain buttons, run history with Manual, Drift alert and Terminal runs |
+| Errors / failures / successful runs | `screenshots/05_pipeline_run_log.png` | Console log of a run from the UI |
+| Pipeline speed and throughput | `evidence/05_pipeline_console_drift_retrain.png`, `evidence/26_grafana_pipeline_ui_infra.png` | rows/s and seconds per stage (Ray preprocessing 5,623 rows/s) |
 
-## DVC pipeline (Data Engineering, CI)
+## Software engineering (5)
 
-| # | File | What it shows | Rubric |
-|---|---|---|---|
-| 6 | `E06_dvc_dag.png` | `dvc dag` | DVC DAG |
-| 7 | `E07_dvc_repro.png` | `bash scripts/run_pipeline.sh`: Ray stage logs with rows/s | Ray pipeline, throughput |
-| 8 | `E08_dvc_metrics.png` | `dvc metrics show` | CI, tracking |
-| 9 | `E09_dvc_partial_repro.png` | `params.yaml` change → `dvc repro` re-runs only the affected stages, then `dvc params diff` | CI with DVC |
-| 10 | `E10_dvc_push.png` | `dvc push`, `dvc status -c`, `ls ../plotgenre-dvc-storage` | DVC versioning |
-| 11 | `E11_mlproject_run.png` | `mlflow run . -e tests --env-manager local` | MLproject |
+| Rubric item | Where |
+|---|---|
+| Architecture / HLD / LLD with endpoint I/O | [architecture](diagrams/architecture.png), [HLD.md](HLD.md), [LLD.md](LLD.md) |
+| Loose coupling of UI and model (REST only) | `evidence/03_docker_compose_ps_images.png` (separate frontend, gateway and model-server containers), `evidence/20_gateway_swagger.png` |
+| PEP8, unit tests | `evidence/29_flake8_unit_integration_tests.png` (flake8 clean, 77 passed) |
+| API security | `evidence/21_gateway_api_key_200_401.png` (200 with key, 401 without) |
+| Test plan, test cases, test report, acceptance criteria | [test_plan.md](test_plan.md), [test_report.md](test_report.md), `evidence/30_e2e_tests_live_stack.png`, `evidence/31_test_report_86_passed.png` (86/86 passed, criteria met) |
 
-## MLflow (Experiment Tracking, APIfication)
+## AIOps implementation (10)
 
-| # | File | What it shows | Rubric |
-|---|---|---|---|
-| 12 | `E12_mlflow_runs.png` | experiment `plotgenre`: parent and nested candidate runs | Tracking |
-| 13 | `E13_mlflow_params_tags.png` | a run's parameters and tags (`git_commit`, data MD5, data version) | Beyond autolog |
-| 14 | `E14_mlflow_metrics.png` | the same run's metrics | Metrics |
-| 15 | `E15_mlflow_artifacts.png` | artifacts tab (reports, feature importance, encrypted model) | Artifacts |
-| 16 | `E16_mlflow_compare.png` | the three candidates compared side by side | Model selection |
-| 17 | `E17_mlflow_registry.png` | Models → `plotgenre-classifier` with `champion` / `previous` aliases | Registry, rollback |
-| 18 | `E18_model_server_curl.png` | `curl` to the MLflow scoring server `localhost:5001/invocations` | MLflow serving |
-
-## FastAPI gateway (Packaging, LLD)
-
-| # | File | What it shows | Rubric |
-|---|---|---|---|
-| 19 | `E19_gateway_swagger.png` | http://localhost:8000/docs | FastAPI, LLD endpoints |
-| 20 | `E20_gateway_curl.png` | `curl` predict with the API key (200), then without it (401) | Security, API |
-
-## Web UI (Demonstration)
-
-These keep the existing names in `docs/screenshots/` (replace the old files).
-
-* `01_classify_empty.png`
-* `02_classify_result.png`
-* `03_classify_validation.png`
-* `04_pipeline_console.png` (scroll so the Grafana panels have loaded)
-* `05_pipeline_run_log.png`
-* `06_help.png`
-* `07_mobile_result.png` (browser dev tools, 390 px width)
-* `08_error_model_down.png`
-
-## Monitoring (Exporter Instrumentation and Visualization)
-
-| # | File | What it shows | Rubric |
-|---|---|---|---|
-| 21 | `E21_prometheus_targets.png` | http://localhost:9090/targets with every target UP | All components monitored |
-| 22 | `E22_prometheus_query.png` | a PromQL graph, e.g. `rate(plotgenre_gateway_requests_total[1m])` | Instrumentation |
-| 23 | `E23_prometheus_alerts.png` | Alerts page with the drift alert firing (also save as `10_prometheus_alerts.png`) | Alerting |
-| 24 | `E24_alertmanager.png` | http://localhost:9093 with the alert routed | Alerting |
-| 25 | `E25_grafana_dashboard.png` | full Grafana dashboard with live data (also save as `09_grafana_dashboard.png`) | Grafana NRT |
-
-## AIOps loop: drift, retraining, rollback, resilience
-
-| # | File | What it shows | Rubric |
-|---|---|---|---|
-| 26 | `E26_drift_retrain_console.png` | Pipeline console with a "Drift alert" run that retrained on data v2 | Automated retraining |
-| 27 | `E27_live_drift_ood.png` | `simulate_traffic.py --mode ood` + the Grafana live-drift panel spiking | Drift monitoring |
-| 28 | `E28_rollback.png` | `python scripts/rollback.py --list` then a rollback; the registry aliases swapped | Rollback |
-| 29 | `E29_model_down_alert.png` | `docker compose stop model-server` → `PlotGenreModelServerDown` firing | Resilience |
-
-## Tests and code quality (Implementation, Testing)
-
-| # | File | What it shows | Rubric |
-|---|---|---|---|
-| 30 | `E30_pytest_unit_integration.png` | `pytest -m "unit or integration"` summary | Unit tests |
-| 31 | `E31_pytest_e2e.png` | `pytest -m e2e` on the live stack | E2E tests |
-| 32 | `E32_flake8.png` | `flake8 src services scripts tests` with no output | PEP8 |
-| 33 | `E33_test_report.png` | `python scripts/generate_test_report.py --e2e` summary | Test report, acceptance criteria |
-| 34 | `E34_github_actions.png` | GitHub Actions run green (after pushing) | CI |
+| Rubric item | Screenshot | What it shows |
+|---|---|---|
+| **Data engineering:** Ray pipeline, throughput | `evidence/08_dvc_partial_repro.png`, `evidence/06_dvc_metrics_show.png`, `evidence/15_mlflow_artifacts.png` | Ray stages with rows/s, data-quality report (42,306 in → 34,632 kept, reject reasons) |
+| **CI with DVC:** DAG | `evidence/04_dvc_dag.png` | 7-stage DAG |
+| **CI with DVC:** only changed stages rerun | `evidence/08_dvc_partial_repro.png`, `evidence/10_dvc_params_metrics_diff.png` | `max_features` change → ingest/preprocess/split/drift_check skipped; params and metrics diff |
+| **Versioning:** Git, Git LFS, DVC remote | `evidence/02_git_push_lfs_ssh.png`, `evidence/07_dvc_push_remote_in_sync.png` | LFS files pushed over SSH; DVC cache and remote in sync |
+| **Experiment tracking:** runs | `evidence/12_mlflow_runs_nested.png` | Parent runs with nested candidate models |
+| **Experiment tracking:** params, metrics, tags beyond autolog | `evidence/13_mlflow_params.png`, `evidence/14_mlflow_metrics_tags_git_commit.png` | Data MD5s, data version, git commit, pipeline run id, promotion decision |
+| **Experiment tracking:** artifacts, comparison | `evidence/15_mlflow_artifacts.png`, `evidence/16_mlflow_compare_plot.png`, `evidence/17_mlflow_compare_metrics.png` | Reports and config snapshot; 3 candidates compared |
+| **Model registry, gated deployment** | `evidence/18_mlflow_registry_aliases.png`, `evidence/09_quality_gate_kept_champion.png` | champion / previous aliases; v3 rejected (0.6639 < 0.6651) |
+| **Prometheus instrumentation, all components** | `evidence/23_prometheus_live_drift_firing.png`, `evidence/28_model_server_down_alert.png` | Alert rules over gateway, model server, pipeline, UI |
+| **Grafana NRT** | `evidence/25_grafana_inference_api.png`, `evidence/26_grafana_pipeline_ui_infra.png` | API, drift, pipeline stages, UI and host panels with live data |
+| **Drift → alert → retrain** | `evidence/22_live_drift_ood_traffic.png`, `evidence/23_prometheus_live_drift_firing.png`, `evidence/24_alertmanager_retrain_route.png`, `evidence/05_pipeline_console_drift_retrain.png` | Live drift 1.13 → 14.46; batch drift 2.52 triggered an automatic retrain on data v2 |
+| **Rollback** | `evidence/27_rollback.png` | champion v2 → v1, served version changes without a restart |
+| **MLflow APIfication** | `evidence/19_mlflow_model_server_curl.png` | MLflow scoring server `/invocations` |
+| **MLproject** | `evidence/11_mlproject_tests_run.png` | `mlflow run . -e tests` |
+| **FastAPI** | `evidence/20_gateway_swagger.png`, `evidence/21_gateway_api_key_200_401.png` | Gateway endpoints |
+| **Docker, Compose, separate FE/BE services** | `evidence/01_setup_script.png`, `evidence/03_docker_compose_ps_images.png` | 10 containers, 4 built images |
+| **CI on GitHub** | `evidence/32_github_actions_ci.png` | Lint + tests green on every push |

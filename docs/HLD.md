@@ -77,14 +77,16 @@ The code is **mostly functional**: pipeline stages are small pure functions (`cl
   * Responsive down to 360 px, with keyboard shortcuts and visible focus.
   * A user manual.
 
-## 6. Results of the reference run (2 vCPU Linux VM)
+## 6. Results of my run (Ubuntu 26.04, 12 cores, 14 GB RAM)
 
 | Item | Value |
 |---|---|
-| Ray preprocessing throughput | ~4,400–5,700 rows/s (42,306 rows in 8–10 s) |
-| Ray TF-IDF transform throughput | ~4,000–5,900 rows/s |
-| Full pipeline (7 stages, cold) | 55–90 s |
-| Validation micro-F1 (v1): LogReg / LinearSVM / ComplementNB | 0.656 / **0.663** / 0.619 |
-| Test micro-F1 / macro-F1 (champion, v2) | **0.668 / 0.621** |
-| p95 latency: model only / end-to-end via gateway | **~23 ms** / ~70–110 ms |
-| Batch drift score: v1 vs newer films / after retrain on v2 | **2.39** (alert) / 1.68–1.72 (no alert) |
+| Ray preprocessing throughput | 5,623 rows/s (42,306 rows in 7.5 s) |
+| Ray TF-IDF transform throughput | 4,968–5,277 rows/s |
+| Full pipeline (7 stages) | 14 min first run (13 min was the dataset download), 69 s for the drift retrain, 42 s for a featurize-only change |
+| Validation micro-F1 (v2): LogReg / LinearSVM / ComplementNB | 0.656 / **0.658** / 0.636 |
+| Test micro-F1 / macro-F1 (champion, v2) | **0.665 / 0.618** (v1 was 0.658) |
+| p95 latency: model only / end-to-end via gateway | **18.7 ms** / ~49 ms |
+| Batch drift score: v1 vs newer films / after retrain on v2 | **2.52** (alert) / 1.65 (no alert) |
+| Live input drift: normal traffic / out-of-domain traffic | 1.13 / **14.46** (alert) |
+| Tests | 86/86 passed (77 unit + integration, 9 e2e) |

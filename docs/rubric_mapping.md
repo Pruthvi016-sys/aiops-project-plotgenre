@@ -15,7 +15,7 @@ This page maps every item of the *AI Application Evaluation Guideline* to where 
 | Separate pipeline visualisation screen | The **Pipeline** page shows: a DVC DAG rendered from `dvc.yaml` with per-stage status, duration and throughput; run history (manual, drift alert, terminal) with logs; reports; embedded Grafana panels; and links to MLflow, Prometheus and Alertmanager. |
 | Pipeline management console | The *Run pipeline* and *Retrain with newer films* buttons start the runner; `POST /api/v1/pipeline/trigger` does the same. |
 | Errors / failures / successful runs | The run history shows the status badge, per-stage ✓/✗ with the error text, and the console log. The success/failed totals are in the summary strip. The `PlotGenrePipelineFailed` alert fires on failure. |
-| Speed and throughput | Each stage records rows and rows/s (shown in the DAG and in Grafana). Ray preprocessing reaches about 5,000 rows/s and the TF-IDF transform about 5,900 rows/s. A full run takes about 1 min. |
+| Speed and throughput | Each stage records rows and rows/s (shown in the DAG and in Grafana). In my run Ray preprocessing reached 5,623 rows/s and the TF-IDF transform about 5,000 rows/s. A full run takes about 1 min once the data is downloaded. |
 
 ## Software engineering (5)
 

@@ -15,13 +15,16 @@ The point of the project is the **AIOps lifecycle** around the model: Ray data e
 | Grafana (dashboard "PlotGenre") | http://localhost:3000 (anonymous view; admin/admin to edit) |
 | Prometheus / Alertmanager / Pushgateway | http://localhost:9090 / :9093 / :9091 |
 
-Reference run on a 2-vCPU VM:
+Results from my run (Ubuntu 26.04, 12 cores, 14 GB RAM, 13–14 Nov 2026):
 
-* **Test micro-F1 0.668** (target ≥ 0.40)
-* **p95 latency 23 ms** for the model alone and about 70 ms end to end (target < 500 ms)
-* **86/86 tests passed**
-* Ray preprocessing at about 5,000 rows/s
-* Full pipeline in about 1 minute
+* **Test micro-F1 0.665** for the deployed model (v2, target ≥ 0.40)
+* **p95 latency 18.7 ms** for the model alone and about 49 ms end to end through the gateway (target < 500 ms)
+* **86/86 tests passed** (77 unit + integration, 9 end-to-end on the live stack)
+* Ray preprocessing at 5,623 rows/s
+* Batch drift 2.52 on newer films → alert → automatic retrain on data v2 → drift 1.65
+* Full pipeline about 1 minute once the dataset is downloaded (the first download from the CMU server took 13 min on my network)
+
+Evidence: every rubric item has a screenshot in [docs/screenshots/evidence/](docs/screenshots/evidence/), listed in [docs/evidence_checklist.md](docs/evidence_checklist.md).
 
 ---
 
@@ -36,7 +39,12 @@ docker compose version             # must print v2.x
 
 # Python 3.12 is used for local development/tests (Ubuntu 24.04 ships it).
 # On 22.04:  sudo add-apt-repository ppa:deadsnakes/ppa && sudo apt install python3.12 python3.12-venv
+# If the system Python is newer (e.g. 3.14 on 26.04), make a 3.12 interpreter with conda and pass it in:
+#   conda create -y -n py312 python=3.12 && conda activate py312
+#   PYTHON=python bash scripts/setup.sh && conda deactivate
 ```
+
+Ports 3000, 5000, 5001, 8000, 8080, 8100, 9090, 9091 and 9093 must be free. Stop any Prometheus/Grafana left over from other projects first (`sudo ss -ltnp | grep -E ':(9090|9093|3000)'`).
 
 The machine needs at least 4 CPU cores and 8 GB RAM to be comfortable, and about 6 GB of free disk for images and data.
 

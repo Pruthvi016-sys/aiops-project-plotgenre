@@ -129,7 +129,7 @@ Every response carries an `X-Request-ID` header. If the client sends an `X-Reque
 ```json
 {"name": "plotgenre-classifier", "alias": "champion", "version": "2", "run_id": "478b0c…",
  "algorithm": "linear_svm", "data_version": "v2", "git_commit": "d8b06f7…",
- "metrics": {"test_micro_f1": 0.668, "test_macro_f1": 0.621, "best_val_micro_f1": 0.664},
+ "metrics": {"test_micro_f1": 0.6651, "test_macro_f1": 0.6177, "best_val_micro_f1": 0.6584},
  "mlflow_run_url": "http://localhost:5000/#/experiments/1/runs/478b0c…"}
 ```
 
