@@ -78,6 +78,10 @@ class Runner:
         self.current: Optional[Dict[str, Any]] = None
         self.history: List[Dict[str, Any]] = self._load()
         self.last_auto_trigger = 0.0
+        # Restore the "last run" gauges after a container restart. A fresh Gauge reads 0,
+        # which would fire PlotGenrePipelineFailed although the last run succeeded.
+        finished = [r for r in self.history if r.get("status") in ("success", "failed")]
+        LAST_STATUS.set(0 if finished and finished[-1]["status"] == "failed" else 1)
 
     # ------------------------------------------------------------------ persistence
     def _load(self) -> List[Dict[str, Any]]:
