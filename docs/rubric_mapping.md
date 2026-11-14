@@ -1,6 +1,6 @@
-# Rubric mapping and viva notes
+# Rubric mapping
 
-This page maps every item of the *AI Application Evaluation Guideline* to where it is implemented, and adds short answers to likely viva questions.
+This page maps every item of the *AI Application Evaluation Guideline* to where it is implemented.
 
 ## Demonstration (5)
 
@@ -48,45 +48,3 @@ This page maps every item of the *AI Application Evaluation Guideline* to where 
 | MLproject | `MLproject` + `python_env.yaml` with entry points for every stage, the full pipeline and the tests |
 | FastAPI for the UI's APIs | `services/gateway` (inference) and `services/pipeline_runner` (console) |
 | Dockerised frontend and backend as separate Compose services | `docker-compose.yml`: frontend, gateway, model-server, pipeline-runner, mlflow + monitoring (10 services) |
-
-## Likely viva questions
-
-**Why TF-IDF and linear models and not BERT?**
-The brief emphasises AIOps rather than accuracy. Linear models train in seconds, serve in about 20 ms on a CPU, and give exact word-level explanations. Micro-F1 of 0.67 is well above the 0.40 target. A transformer could replace the model behind the same pyfunc contract without changing the gateway or the UI.
-
-**Why One-vs-Rest, and why calibration?**
-Multi-label means an independent yes/no per genre. LinearSVC and ComplementNB don't produce probabilities, so `CalibratedClassifierCV` (sigmoid) makes their confidences comparable and thresholdable.
-
-**How is an experiment reproduced?**
-Check out the git commit stored in the MLflow run (`git_commit` tag), then `dvc checkout` (the data hashes are in `dvc.lock` and also logged as `X_train_md5`), then `dvc repro`, or `mlflow run . -e train`. The params are in `params.yaml`, which is also logged as an artifact. Ray output is sorted, so splits are identical.
-
-**How does the drift detection work?**
-Drift is the Jensen-Shannon distance between the document-frequency distributions of the top 300 training terms, comparing training plots with current plots. It is divided by the distance you get between training plots and another same-size sample of training plots (the noise floor). A score near 1 means no drift. The threshold of 2.0 was calibrated: v1 vs newer films scores 2.4, v2 vs newer films 1.7, and out-of-domain text above 14.
-
-**What happens when drift is detected?**
-A Prometheus rule fires and Alertmanager routes it (`action=retrain`) to the runner webhook, authenticated with a Bearer key. The runner switches to data v2 and runs `dvc repro` and `dvc push`. `evaluate` promotes the new version only if it passes AC-1 and is at least as good as the champion. The supervisor then redeploys. A 30-minute cooldown prevents loops.
-
-**How do rollbacks work?**
-The registry aliases are `champion` and `previous`. `scripts/rollback.py` swaps them. The supervisor polls every 20 s and redeploys. If a new version fails its health check, the supervisor restarts the previous version itself (`plotgenre_model_server_rollbacks_total`).
-
-**Why a gateway in front of MLflow serving?**
-The gateway owns the product API contract, authentication, validation, friendly errors and business metrics (genre mix, live drift). The MLflow scoring server stays a replaceable internal component.
-
-**How is loose coupling ensured?**
-The UI only calls `/api/...` on its own server. The proxy forwards to URLs taken from environment variables. No code imports cross service boundaries, except the dependency-free `drift_core.py` copied into the gateway image.
-
-**Security?**
-* API keys, kept server-side, with Bearer auth for the webhook
-* Fernet-encrypted model (tamper-evident)
-* Secrets in a git-ignored `.env`
-* Non-root containers
-* MLflow allowed-hosts
-* Proxy allow-list
-* Safe tar extraction
-* Input size limits
-
-**Why Ray and not Spark?**
-The data fits in memory, the team works in Python, and Ray needs no JVM and scales from a laptop to a cluster. Ray Data streams batches through the transformations, and Ray tasks parallelise featurisation.
-
-**What would you do next?**
-Per-genre thresholds, a transformer model behind the same contract, Kubernetes (KServe or Ray Serve) for autoscaling, a feedback endpoint to measure live accuracy, and Grafana alert annotations for deployments.
