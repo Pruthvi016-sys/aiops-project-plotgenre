@@ -86,7 +86,9 @@
   // ------------------------------------------------------------------ routing
   const views = ["classify", "pipeline", "help"];
   let pipelineTimer = null;
+  let firstRoute = true;
   function route() {
+    const routeStart = performance.now();
     const name = (location.hash.replace(/^#\/?/, "") || "classify").split("?")[0];
     const page = views.includes(name) ? name : "classify";
     currentPage = page;
@@ -97,7 +99,11 @@
     document.title = { classify: "PlotGenre – classify a plot", pipeline: "PlotGenre – pipeline console", help: "PlotGenre – help" }[page];
     clearInterval(pipelineTimer);
     if (page === "pipeline") { loadPipeline(); pipelineTimer = setInterval(loadPipeline, 8000); }
-    telemetry({ type: "page_load", duration_ms: Math.round(performance.now()) });
+    // First view: time since the document started loading. Later tab switches: time to render
+    // the view (performance.now() keeps growing, so it must not be reported as a load time).
+    const loadMs = firstRoute ? performance.now() : performance.now() - routeStart;
+    firstRoute = false;
+    telemetry({ type: "page_load", duration_ms: Math.min(Math.round(loadMs), 120000) });
   }
   window.addEventListener("hashchange", route);
 
