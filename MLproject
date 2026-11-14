@@ -27,4 +27,4 @@ entry_points:
   tests:
     parameters:
       marker: {type: string, default: "unit or integration"}
-    command: "python -m pytest -m '{marker}' -q"
+    command: "python -m pytest -m {marker} -q"  # MLflow shell-quotes parameter values itself

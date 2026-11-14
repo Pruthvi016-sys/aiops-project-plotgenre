@@ -26,6 +26,7 @@ venv/
 /mlflow_data/
 /mlruns/
 mlruns.db
+mlflow.db
 reports/pipeline_runs.jsonl
 reports/runner_runs.json
 reports/junit*.xml
