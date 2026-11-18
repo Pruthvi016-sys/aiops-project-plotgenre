@@ -205,11 +205,11 @@ stages:
     outs:
     - path: models/model.pkl.enc
       hash: md5
-      md5: bdfc986b513f1f7d164aad656f649041
+      md5: ff8d684374b078b3d88afbb7a9fbd39f
       size: 20076836
     - path: models/run_info.json
       hash: md5
-      md5: b6190289cb8907f47648a85195f859b8
+      md5: 0a67786527076bf415793a56ebf885c9
       size: 435
     - path: reports/train_metrics.json
       hash: md5
@@ -230,11 +230,11 @@ stages:
       nfiles: 3
     - path: models/model.pkl.enc
       hash: md5
-      md5: bdfc986b513f1f7d164aad656f649041
+      md5: ff8d684374b078b3d88afbb7a9fbd39f
       size: 20076836
     - path: models/run_info.json
       hash: md5
-      md5: b6190289cb8907f47648a85195f859b8
+      md5: 0a67786527076bf415793a56ebf885c9
       size: 435
     - path: src/plotgenre/models/evaluate.py
       hash: md5
@@ -249,7 +249,7 @@ stages:
     outs:
     - path: reports/metrics.json
       hash: md5
-      md5: d9f646a400f382d189428dc6cc59f342
+      md5: 2f8647e8569d82e9f4652475e1f7005b
       size: 614
     - path: reports/per_genre_f1.csv
       hash: md5
